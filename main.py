@@ -1,7 +1,8 @@
 import json
 import requests
 import uuid
-import random
+import schedule
+import time
 
 
 class API:
@@ -20,6 +21,7 @@ class API:
         )
         if self.html_response.status_code == 200:
             return self.get_content()
+        print(f"Get Error - Response Code: {self.html_response.status_code}")
 
     def post(self, add_to_url: str, json_data: dict):
         self.html_response = requests.post(
@@ -27,6 +29,7 @@ class API:
         )
         if self.html_response.status_code in (200, 201):
             return self.get_content()
+        print(f"Post Error - Response Code: {self.html_response.status_code}")
 
 
 class GroupMeAPI(API):
@@ -50,11 +53,20 @@ class GroupMeAPI(API):
         return self.post(path, message_data)
 
 
+def read_text(path: str):
+    with open(path, "r", encoding="utf-8") as file:
+        return file.read()
+
+
 def main():
     groupme = GroupMeAPI("")
     group_id = "96423169"  # = groupme.get_group_id("Test")
-    message = "This is a test messsage."
-    groupme.send_message(message, group_id)
+    message = read_text("message.txt")
+    schedule.every().day.at("12:32").do(groupme.send_message, message, group_id)
+
+    while True:
+        schedule.run_pending()
+        time.sleep(60)  # wait one minute
 
 
 main()
